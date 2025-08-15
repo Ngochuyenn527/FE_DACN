@@ -1,0 +1,447 @@
+/* Reset và Global Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  background-color: #f8f9fa;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+}
+
+.App {
+  min-height: 100vh;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Custom Styles cho Auth Layout */
+.auth-gradient-bg {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-gradient-bg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+    circle at 25% 25%,
+    rgba(255, 255, 255, 0.1) 1px,
+    transparent 1px
+  );
+  background-size: 40px 40px;
+}
+
+/* Custom Button Styles - Consistent border-radius */
+.btn {
+  border-radius: 8px !important;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.011em;
+  transition: all 0.3s ease;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border: none;
+  border-radius: 8px !important;
+  font-weight: 500;
+  font-family: "Inter", sans-serif;
+  letter-spacing: -0.011em;
+  transition: all 0.3s ease;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  border-radius: 8px !important;
+}
+
+.btn-dark {
+  background-color: #374151;
+  border-color: #374151;
+  border-radius: 8px !important;
+}
+
+.btn-dark:hover {
+  background-color: #1f2937;
+  border-color: #1f2937;
+  transform: translateY(-1px);
+  border-radius: 8px !important;
+}
+
+.btn-danger {
+  background-color: #ef4444;
+  border-color: #ef4444;
+  border-radius: 8px !important;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+  border-radius: 8px !important;
+}
+
+.btn-outline-light {
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  color: white;
+  font-weight: 500;
+  font-family: "Inter", sans-serif;
+  letter-spacing: -0.011em;
+  transition: all 0.3s ease;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  border-radius: 8px !important;
+}
+
+.btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+  transform: translateY(-1px);
+  border-radius: 8px !important;
+}
+
+.btn-outline-secondary {
+  border-radius: 8px !important;
+}
+
+.btn-outline-secondary:hover {
+  border-radius: 8px !important;
+}
+
+/* Custom Input Styles - Sharper appearance */
+.form-control {
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-family: "Inter", sans-serif;
+  font-weight: 400;
+  transition: all 0.3s ease;
+  background-color: #ffffff;
+  letter-spacing: -0.011em;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+.form-control:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  background-color: #ffffff;
+}
+
+.form-control::placeholder {
+  color: #9ca3af;
+  font-family: "Inter", sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.011em;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border: 2px solid #e5e7eb;
+  border-right: none;
+  color: #6b7280;
+  font-family: "Inter", sans-serif;
+}
+
+.input-group .form-control {
+  border-left: none;
+}
+
+.input-group:focus-within .input-group-text {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+.input-group:focus-within .form-control {
+  border-left: none;
+}
+
+/* Form Labels - Sharper */
+.form-label {
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.011em;
+  font-size: 14px;
+}
+
+/* OTP Input Styles - More refined */
+.otp-input {
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  font-size: 1.375rem;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  letter-spacing: -0.025em;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+.otp-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  outline: none;
+}
+
+/* Alert Custom Styles */
+.alert-danger {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 8px;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* Link Styles - Sharper */
+a {
+  text-decoration: none;
+  font-family: "Inter", sans-serif;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  letter-spacing: -0.011em;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Headings với Inter - More refined */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+/* Paragraphs và text - Sharper */
+p,
+span,
+div,
+label {
+  font-family: "Inter", sans-serif;
+  letter-spacing: -0.011em;
+}
+
+/* Small text refinement */
+small {
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+/* Animation cho loading */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-form {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .auth-gradient-bg {
+    display: none !important;
+  }
+
+  .auth-right-panel {
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .otp-input {
+    width: 45px;
+    height: 45px;
+    font-size: 1.25rem;
+  }
+}
+
+/* Custom spacing */
+.z-index-1 {
+  z-index: 1;
+}
+
+/* Shadow effects */
+.auth-card {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  background: white;
+}
+
+/* Vietnamese text optimization for Inter */
+.vietnamese-text {
+  font-family: "Inter", sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Statistics Dashboard Styles */
+.hover-shadow {
+  transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important;
+}
+
+.bg-gradient-success {
+  background: linear-gradient(135deg, #198754 0%, #146c43 100%) !important;
+}
+
+.bg-gradient-info {
+  background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%) !important;
+}
+
+.bg-gradient-warning {
+  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+}
+
+/* Statistics Cards Animation */
+.statistics-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.statistics-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.statistics-card:hover::before {
+  left: 100%;
+}
+
+.statistics-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Progress bar animation */
+.progress-bar {
+  transition: width 1s ease-in-out;
+}
+
+/* Card Header Gradients */
+.card-header.bg-gradient-primary,
+.card-header.bg-gradient-success {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-header.bg-gradient-primary::before,
+.card-header.bg-gradient-success::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card-header.bg-gradient-primary:hover::before,
+.card-header.bg-gradient-success:hover::before {
+  opacity: 1;
+}
+
+/* Chart container improvements */
+.recharts-wrapper {
+  font-family: "Inter", sans-serif !important;
+}
+
+.recharts-cartesian-axis-tick-value,
+.recharts-legend-item-text {
+  font-family: "Inter", sans-serif !important;
+  font-size: 12px !important;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .statistics-card {
+    margin-bottom: 1rem;
+  }
+
+  .hover-shadow:hover {
+    transform: none;
+  }
+
+  .statistics-card:hover {
+    transform: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .btn,
+  .dropdown {
+    display: none !important;
+  }
+
+  .card {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+  }
+}
