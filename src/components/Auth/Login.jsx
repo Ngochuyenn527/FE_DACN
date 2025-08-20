@@ -45,7 +45,7 @@ const Login = () => {
 
     setIsSendingCode(true);
     try {
-      const res = await axiosInstance.post("/auth/send-verification-code", {
+      const res = await axiosInstance.post("/auth/send_otp", {
         email: formData.email,
       });
       if (res.data && res.data.status === 200) {
@@ -92,19 +92,16 @@ const Login = () => {
 
     try {
       const payload = {
-        email: formData.email,
+        username_or_email: formData.email,
       };
 
       if (activeTab === "verification") {
-        payload.verificationCode = formData.verificationCode;
+        payload.otp = formData.verificationCode;
       } else {
         payload.password = formData.password;
       }
 
-      const endpoint =
-        activeTab === "verification"
-          ? "/auth/login-verification"
-          : "/auth/login";
+      const endpoint = "/auth/login";
       const response = await axiosInstance.post(endpoint, payload);
       const result = response.data;
 
@@ -138,8 +135,8 @@ const Login = () => {
     } catch (error) {
       if (error.response && error.response.data) {
         const result = error.response.data;
-        if (result.status === 401 && result.message === "Need to verify") {
-          showToast(result.message || "You need to verify your account!", {
+        if (result.status === 401 && result.detail === "Need to verify") {
+          showToast(result.detail || "You need to verify your account!", {
             type: "warning",
           });
           navigate("/verify-otp", { state: { email: formData.username } });
@@ -150,10 +147,10 @@ const Login = () => {
             fieldErrors[err.field] = err.message;
           });
           setErrors(fieldErrors);
-          showToast(result.message || "Validation error!", { type: "error" });
+          showToast(result.detail || "Validation error!", { type: "error" });
         } else {
-          setErrors({ general: result.message || "Login failed." });
-          showToast(result.message || "Login failed!", { type: "error" });
+          setErrors({ general: result.detail || "Login failed." });
+          showToast(result.detail || "Login failed!", { type: "error" });
         }
       } else {
         setErrors({ general: "Unable to connect to server." });
