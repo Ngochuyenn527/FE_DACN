@@ -18,6 +18,29 @@ function AssistantConfigModal({ open, onClose, onSave }) {
   ];
   const [kb, setKb] = useState(null);
 
+  // Form state (Prompt engine tab)
+  const [systemPrompt, setSystemPrompt] = useState(
+    'You are an intelligent assistant. Please summarize the content of the knowledge base to answer the question. Please list the data in the knowledge base and answer in detail. When all knowledge base content is irrelevant to the question, your answer must include the sentence "The answer you are looking for is not found in the knowledge base!" Answers need to consider chat history.'
+  );
+
+  // Form state (Model settings tab)
+  const modelOptions = [
+    { value: "deepseek-v3@giteeai", label: "DeepSeek-V3@GiteeAI" },
+    { value: "gpt-4", label: "GPT-4" },
+    { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
+    { value: "claude-3", label: "Claude-3" },
+    { value: "gemini-pro", label: "Gemini Pro" },
+  ];
+  const [selectedModel, setSelectedModel] = useState(modelOptions[0]);
+
+  const creativityOptions = [
+    { value: "precise", label: "Precise" },
+    { value: "balanced", label: "Balanced" },
+    { value: "creative", label: "Creative" },
+  ];
+  const [creativity, setCreativity] = useState(creativityOptions[0]);
+  const [temperature, setTemperature] = useState(0.2);
+
   const canSave = useMemo(
     () => assistantName.trim().length > 0,
     [assistantName]
@@ -28,6 +51,12 @@ function AssistantConfigModal({ open, onClose, onSave }) {
     setAssistantDesc("");
     setOpeningGreeting("Hi! I'm your assistant, what can I do for you?");
     setKb(null);
+    setSystemPrompt(
+      'You are an intelligent assistant. Please summarize the content of the knowledge base to answer the question. Please list the data in the knowledge base and answer in detail. When all knowledge base content is irrelevant to the question, your answer must include the sentence "The answer you are looking for is not found in the knowledge base!" Answers need to consider chat history.'
+    );
+    setSelectedModel(modelOptions[0]);
+    setCreativity(creativityOptions[0]);
+    setTemperature(0.2);
   };
 
   const handleClose = () => {
@@ -42,6 +71,10 @@ function AssistantConfigModal({ open, onClose, onSave }) {
       description: assistantDesc.trim(),
       openingGreeting,
       knowledgeBase: kbOptions?.value || "",
+      systemPrompt: systemPrompt.trim(),
+      model: selectedModel?.value || "",
+      creativity: creativity?.value || "",
+      temperature: temperature,
     });
     handleClose();
   };
@@ -184,11 +217,206 @@ function AssistantConfigModal({ open, onClose, onSave }) {
           )}
 
           {activeTab === "prompt" && (
-            <div className="text-muted">(Prompt engine settings go here.)</div>
+            <>
+              <div className="mb-4">
+                <label className="form-label d-flex align-items-center gap-2">
+                  <span className="text-danger">*</span>
+                  System prompt
+                  <i
+                    className="bi bi-question-circle text-muted"
+                    title="Define how the assistant should behave and respond to users"
+                    style={{ cursor: "help" }}
+                  ></i>
+                </label>
+                <textarea
+                  className="form-control"
+                  rows={12}
+                  value={systemPrompt}
+                  onChange={(e) => setSystemPrompt(e.target.value)}
+                  placeholder="Enter the system prompt that defines how your assistant should behave..."
+                  style={{
+                    fontSize: "14px",
+                    lineHeight: "1.5",
+                    resize: "vertical",
+                    minHeight: "300px",
+                  }}
+                />
+                <div className="form-text text-muted">
+                  <small>
+                    This prompt defines the personality, behavior, and response
+                    style of your assistant. It will be used as the foundation
+                    for all conversations.
+                  </small>
+                </div>
+              </div>
+
+              {/* Character count */}
+              <div className="d-flex justify-content-between align-items-center">
+                <div className="text-muted small">
+                  <i className="bi bi-info-circle me-1"></i>
+                  Tip: Be specific about how the assistant should handle
+                  knowledge base queries
+                </div>
+                <div className="text-muted small">
+                  {systemPrompt.length} characters
+                </div>
+              </div>
+            </>
           )}
 
           {activeTab === "model" && (
-            <div className="text-muted">(Model settings go here.)</div>
+            <>
+              <div className="mb-4">
+                <label className="form-label d-flex align-items-center gap-2">
+                  <span className="text-danger">*</span>
+                  Model
+                  <i
+                    className="bi bi-question-circle text-muted"
+                    title="Select the AI model to power your assistant"
+                    style={{ cursor: "help" }}
+                  ></i>
+                </label>
+                <Select
+                  options={modelOptions}
+                  value={selectedModel}
+                  onChange={(opt) => setSelectedModel(opt)}
+                  placeholder="Please select a model"
+                  menuPlacement="bottom"
+                  menuPortalTarget={
+                    typeof document !== "undefined" ? document.body : null
+                  }
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    control: (base) => ({
+                      ...base,
+                      minHeight: "42px",
+                      fontSize: "14px",
+                    }),
+                  }}
+                />
+                <div className="form-text text-muted">
+                  <small>
+                    Choose the AI model that will power your assistant.
+                    Different models have varying capabilities, response times,
+                    and costs.
+                  </small>
+                </div>
+              </div>
+
+              {/* Creativity Section */}
+              <div
+                className="mb-4 p-4 rounded"
+                style={{ backgroundColor: "#f8f9fa" }}
+              >
+                <div className="d-flex align-items-center justify-content-between mb-4">
+                  <div className="d-flex align-items-center gap-2">
+                    <span
+                      className="fw-semibold text-dark"
+                      style={{ fontSize: "16px" }}
+                    >
+                      Creativity
+                    </span>
+                    <i
+                      className="bi bi-question-circle text-muted"
+                      title="Controls the creativity and randomness of responses"
+                      style={{ cursor: "help", fontSize: "14px" }}
+                    ></i>
+                  </div>
+                  <Select
+                    options={creativityOptions}
+                    value={creativity}
+                    onChange={(opt) => setCreativity(opt)}
+                    placeholder="Select creativity level"
+                    menuPlacement="bottom"
+                    menuPortalTarget={
+                      typeof document !== "undefined" ? document.body : null
+                    }
+                    styles={{
+                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                      control: (base) => ({
+                        ...base,
+                        minHeight: "40px",
+                        fontSize: "14px",
+                        minWidth: "160px",
+                        border: "1px solid #dee2e6",
+                        borderRadius: "6px",
+                        backgroundColor: "white",
+                      }),
+                    }}
+                  />
+                </div>
+
+                {/* Temperature Slider */}
+                <div>
+                  <div className="d-flex align-items-center justify-content-between mb-3">
+                    <div className="d-flex align-items-center gap-2">
+                      <span
+                        className="fw-semibold text-dark"
+                        style={{ fontSize: "16px" }}
+                      >
+                        Temperature
+                      </span>
+                      <i
+                        className="bi bi-question-circle text-muted"
+                        title="Lower values make output more focused, higher values more creative"
+                        style={{ cursor: "help", fontSize: "14px" }}
+                      ></i>
+                    </div>
+                    <div
+                      className="px-3 py-2 rounded text-center fw-medium"
+                      style={{
+                        backgroundColor: "white",
+                        border: "1px solid #dee2e6",
+                        minWidth: "80px",
+                        fontSize: "14px",
+                        color: "#6c757d",
+                      }}
+                    >
+                      {temperature.toFixed(2)}
+                    </div>
+                  </div>
+
+                  <div className="position-relative">
+                    <input
+                      type="range"
+                      className="form-range"
+                      min="0"
+                      max="2"
+                      step="0.01"
+                      value={temperature}
+                      onChange={(e) =>
+                        setTemperature(parseFloat(e.target.value))
+                      }
+                      style={{
+                        height: "8px",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Model Info */}
+              <div className="alert alert-info d-flex align-items-start gap-2">
+                <i className="bi bi-info-circle mt-1"></i>
+                <div>
+                  <div className="fw-semibold mb-1">
+                    Selected Model: {selectedModel?.label}
+                  </div>
+                  <div className="small">
+                    {selectedModel?.value === "deepseek-v3@giteeai" &&
+                      "Advanced reasoning and coding capabilities with multilingual support."}
+                    {selectedModel?.value === "gpt-4" &&
+                      "Most capable model with excellent reasoning and complex task handling."}
+                    {selectedModel?.value === "gpt-3.5-turbo" &&
+                      "Fast and efficient model suitable for most conversational tasks."}
+                    {selectedModel?.value === "claude-3" &&
+                      "Excellent at analysis, writing, and following complex instructions."}
+                    {selectedModel?.value === "gemini-pro" &&
+                      "Google's advanced model with strong multimodal capabilities."}
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
 
@@ -199,7 +427,15 @@ function AssistantConfigModal({ open, onClose, onSave }) {
           </button>
           <button
             className="btn btn-primary"
-            onClick={handleSave}
+            onClick={() => {
+              console.log(
+                "OK clicked, canSave:",
+                canSave,
+                "assistantName:",
+                assistantName
+              );
+              handleSave();
+            }}
             disabled={!canSave}
           >
             OK
