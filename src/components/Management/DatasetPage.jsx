@@ -61,6 +61,9 @@ export default function DatasetPage() {
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [newFileName, setNewFileName] = useState("");
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [isDragOver, setIsDragOver] = useState(false);
   const itemsPerPage = 4; // Show 5 items per page for demo
 
   const handleBackToKB = () => {
@@ -136,6 +139,58 @@ export default function DatasetPage() {
     }
 
     handleCloseRenameModal();
+  };
+
+  // Upload modal handlers
+  const handleShowUploadModal = () => {
+    setShowUploadModal(true);
+  };
+
+  const handleCloseUploadModal = () => {
+    setShowUploadModal(false);
+    setSelectedFiles([]);
+    setIsDragOver(false);
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    setSelectedFiles((prev) => [...prev, ...droppedFiles]);
+  };
+
+  const handleFileSelect = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setSelectedFiles((prev) => [...prev, ...selectedFiles]);
+  };
+
+  const removeFile = (index) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUploadFiles = () => {
+    if (selectedFiles.length === 0) return;
+
+    // Here you would typically upload the files to your server
+    console.log("Uploading files:", selectedFiles);
+
+    // For demo purposes, just close the modal
+    handleCloseUploadModal();
+
+    // You might want to refresh the file list after upload
+    // loadFiles();
   };
 
   useEffect(() => {
@@ -225,8 +280,18 @@ export default function DatasetPage() {
                     onChange={handleSearchChange}
                   />
                 </div>
-                <button className="btn btn-primary d-flex align-items-center gap-2">
-                  <i className="bi bi-plus"></i>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleShowUploadModal}
+                  style={{
+                    borderRadius: "8px",
+                    fontFamily: "'Inter', sans-serif",
+                    fontWeight: "600",
+                    fontSize: "14px",
+                    padding: "8px 16px",
+                  }}
+                >
+                  <i className="bi bi-plus-circle me-2"></i>
                   Add file
                 </button>
               </div>
@@ -377,6 +442,132 @@ export default function DatasetPage() {
                   className="btn btn-primary"
                   onClick={handleSaveRename}
                   disabled={!newFileName.trim()}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleCloseUploadModal();
+          }}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content" style={{ borderRadius: "12px" }}>
+              <div className="modal-header border-0 pb-2">
+                <h5 className="modal-title fw-semibold">Upload Files</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={handleCloseUploadModal}
+                ></button>
+              </div>
+              <div className="modal-body pt-0">
+                {/* Drag and Drop Area */}
+                <div
+                  className={`border-2 border-dashed rounded-3 p-5 text-center mb-4 ${
+                    isDragOver
+                      ? "border-primary bg-primary bg-opacity-10"
+                      : "border-secondary"
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  style={{
+                    minHeight: "200px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  <div className="mb-3">
+                    <i
+                      className={`bi bi-cloud-upload display-1 ${
+                        isDragOver ? "text-primary" : "text-muted"
+                      }`}
+                    ></i>
+                  </div>
+                  <h6 className={isDragOver ? "text-primary" : "text-muted"}>
+                    Drag and drop your file here to upload
+                  </h6>
+                  <p className="text-muted mb-3">or</p>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileSelect}
+                    style={{ display: "none" }}
+                    id="fileInput"
+                    accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx"
+                  />
+                  <label
+                    htmlFor="fileInput"
+                    className="btn btn-outline-primary"
+                    style={{ cursor: "pointer" }}
+                  >
+                    Choose files
+                  </label>
+                </div>
+
+                {/* Selected Files List */}
+                {selectedFiles.length > 0 && (
+                  <div className="mb-3">
+                    <h6 className="mb-2">
+                      Selected Files ({selectedFiles.length})
+                    </h6>
+                    <div
+                      className="border rounded p-3"
+                      style={{ maxHeight: "200px", overflowY: "auto" }}
+                    >
+                      {selectedFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="d-flex align-items-center justify-content-between py-2 border-bottom"
+                        >
+                          <div className="d-flex align-items-center gap-2">
+                            <i className="bi bi-file-earmark text-primary"></i>
+                            <div>
+                              <div className="fw-medium">{file.name}</div>
+                              <small className="text-muted">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                              </small>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => removeFile(index)}
+                            title="Remove file"
+                          >
+                            <i className="bi bi-x"></i>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer border-0 pt-0">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleCloseUploadModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleUploadFiles}
+                  disabled={selectedFiles.length === 0}
                 >
                   OK
                 </button>
