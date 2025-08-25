@@ -15,6 +15,7 @@ import KnowledgeBaseManagement from "./components/Management/KnowledgeBaseManage
 import ChatManagement from "./components/Management/ChatManagement";
 import FileManagement from "./components/Management/FileManagement";
 import DatasetPage from "./components/Management/DatasetPage";
+import UserManagement from "./components/Management/UserManagement";
 import "./App.css";
 
 function App() {
@@ -82,6 +83,10 @@ function App() {
           <Route
             path="/dashboard/file-management"
             element={<FileManagement />}
+          />
+          <Route
+            path="/dashboard/user-management"
+            element={<UserManagement />}
           />
           <Route path="/knowledge-base" element={<KnowledgeBaseManagement />} />
           <Route path="/dataset/:kbId/:kbName" element={<DatasetPage />} />

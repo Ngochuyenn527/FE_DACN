@@ -64,6 +64,12 @@ export default function Navbar() {
       label: "File Management",
       active: location.pathname.includes("/dashboard/file-management"),
     },
+    {
+      path: "/dashboard/user-management",
+      icon: "bi bi-person",
+      label: "User Management",
+      active: location.pathname.includes("/dashboard/user-management"),
+    },
   ];
 
   return (
