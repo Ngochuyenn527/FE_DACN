@@ -3,7 +3,9 @@ import DashboardLayout from "../Layout/DashboardLayout";
 import Select from "react-select";
 import { showToast } from "../Common/Toast";
 import axiosInstance from "../../api/axiosInstance";
-import qs from "qs";
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw'
+
 
 // Minimal modal component that looks like your screenshots and does not require Bootstrap JS.
 function AssistantConfigModal({ open, onClose, onSave }) {
@@ -461,17 +463,25 @@ export default function ChatManagement() {
     const fetchAssistants = async () => {
       try {
         const response = await axiosInstance.get("/chat-model/all");
-        if (response.status === 200) {
+        if (response.status === 200 && Array.isArray(response.data)) {
           setAssistants(response.data);
           if (response.data.length > 0) {
             setSelectedAssistant(response.data[0]);
           }
         } else {
-          showToast("Failed to load assistants.", { type: "error" });
+          // Nếu không có dữ liệu hoặc data không đúng định dạng
+          setAssistants([]);
+          setSelectedAssistant(null);
         }
       } catch (error) {
-        console.error("Error fetching assistants:", error);
-        showToast("Error fetching assistants.", { type: "error" });
+        if (error.response && error.response.status === 404) {
+          // Không có assistant nào
+          setAssistants([]);
+          setSelectedAssistant(null);
+        } else {
+          console.error("Error fetching assistants:", error);
+          showToast("Error fetching assistants.", { type: "error" });
+        }
       }
     };
     fetchAssistants();
@@ -592,16 +602,20 @@ export default function ChatManagement() {
     });
   
     try {
-      const payload = {
+      const payload = new URLSearchParams({
         conversation_id: selectedChat.conversation_id,
         message: userMessage.content,
-      };
-  
-      const response = await fetch("/api/v2/Chat/chat/stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(payload).toString(),
       });
+  
+      const response = await fetch("http://localhost:8053/api/v2/Chat/chat/stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: payload,
+      });
+  
+      if (!response.body) throw new Error("ReadableStream not supported");
   
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -621,8 +635,10 @@ export default function ChatManagement() {
             chat.conversation_id === selectedChat.conversation_id
               ? {
                   ...chat,
-                  messages: chat.messages.map(m =>
-                    m === botMessage ? { ...m, content: accumulated } : m
+                  messages: chat.messages.map((m, idx) =>
+                    idx === chat.messages.length - 1 && m.role === "assistant"
+                      ? { ...m, content: accumulated }
+                      : m
                   ),
                 }
               : chat
@@ -639,8 +655,10 @@ export default function ChatManagement() {
           chat.conversation_id === selectedChat.conversation_id
             ? {
                 ...chat,
-                messages: chat.messages.map(m =>
-                  m === botMessage ? { ...m, content: "⚠️ Lỗi stream" } : m
+                messages: chat.messages.map((m, idx) =>
+                  idx === chat.messages.length - 1 && m.role === "assistant"
+                    ? { ...m, content: "⚠️ Lỗi stream" }
+                    : m
                 ),
               }
             : chat
@@ -709,7 +727,7 @@ export default function ChatManagement() {
       }
     } catch (error) {
       console.error("Failed to delete conversation:", error);
-      showToast("Failed to delete", "error");
+      showToast("Failed to delete", { type: "error" });
     }
   };
   const handleDeleteAssistant = async (assistantId) => {
@@ -895,13 +913,21 @@ export default function ChatManagement() {
                     currentChat?.messages?.map((msg, idx) => (
                       <div
                         key={idx}
-                        className={`d-flex mb-3 ${msg.role === 'user' ? 'justify-content-end' : ''}`}
+                        className={`d-flex mb-3 ${msg.role === "user" ? "justify-content-end" : ""}`}
                       >
                         <div
-                          className={`p-2 rounded ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-light'}`}
+                          className={`p-2 rounded ${
+                            msg.role === "user" ? "bg-primary text-white" : "bg-light"
+                          }`}
                           style={{ maxWidth: "70%" }}
                         >
-                          {msg.content}
+                          {msg.role === "assistant" ? (
+                            <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                              {msg.content}
+                            </ReactMarkdown>
+                          ) : (
+                            msg.content
+                          )}
                         </div>
                       </div>
                     ))

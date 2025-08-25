@@ -107,8 +107,11 @@ export default function KnowledgeBasePage() {
           }))
         );
       } catch (err) {
-        console.error("Fetch KB list error:", err);
-        showToast("error", "Failed to load knowledge bases ❌");
+        if(err.response && err.response.status === 404) {
+          setItems([]);
+          return;
+        }
+        showToast("Failed to load knowledge bases", { type: "error" });
       } finally {
         setLoading(false);
       }
@@ -151,27 +154,26 @@ export default function KnowledgeBasePage() {
       setShowModal(false);
       setNewKbName("");
   
-      showToast("success", createdKb.message || "Knowledge base created successfully ✅");
+      showToast(createdKb.message || "Knowledge base created successfully", { type: "success" });
     } catch (err) {
       if (err.response) {
         const { status, data } = err.response;
-        const msg = data?.message || "Something went wrong ❌";
+        const msg = data?.message || "Something went wrong";
   
         if (status === 400) {
-          showToast("error", msg);
+          showToast(msg, { type: "error" });
         } else if (status === 401) {
-          showToast("error", msg || "Unauthorized ❌");
+          showToast(msg || "Unauthorized", { type: "error" });
         } else if (status === 409) {
-          showToast("error", msg || "Knowledge base already exists ⚠️");
+          showToast(msg || "Knowledge base already exists", { type: "error" });
         } else {
-          showToast("error", msg);
+          showToast(msg, { type: "error" });
         }
       } else if (err.request) {
-        showToast("error", "No response from server ⚠️");
+        showToast("No response from server", { type: "error" });
       } else {
-        showToast("error", "Unexpected error ❌");
+        showToast("Unexpected error", { type: "error" });
       }
-      console.error("Create KB error:", err);
     }
   };
 
@@ -192,7 +194,7 @@ export default function KnowledgeBasePage() {
   const handleDeleteKb = async () => {
     try {
       const res = await axiosInstance.delete(`/knowledge_bases/delete/${kbToDelete}`);
-      showToast(res.data);
+      showToast(res.data, {type: "success"});
 
       // Cập nhật danh sách sau khi xóa
       setItems((prev) => prev.filter((x) => x.id !== kbToDelete));
@@ -202,19 +204,19 @@ export default function KnowledgeBasePage() {
       console.error("Lỗi xóa KB:", err);
       if (err.response) {
         const { status, data } = err.response;
-        const msg = data?.message || "Xóa thất bại ❌";
+        const msg = data?.message || "Xóa thất bại";
 
         if (status === 404) {
-          showToast("error", "Không tìm thấy knowledge base ❌");
+          showToast("Không tìm thấy knowledge base", { type: "error" });
         } else if (status === 401) {
-          showToast("error", "Không có quyền truy cập ❌");
+          showToast("Không có quyền truy cập", { type: "error" });
         } else {
-          showToast("error", msg);
+          showToast(msg);
         }
       } else if (err.request) {
-        showToast("error", "Không nhận được phản hồi từ server ⚠️");
+        showToast("Không nhận được phản hồi từ server", { type: "error" });
       } else {
-        showToast("error", "Lỗi bất ngờ ❌");
+        showToast("Lỗi bất ngờ", { type: "error" });
       }
       setShowDeleteModal(false);
     }

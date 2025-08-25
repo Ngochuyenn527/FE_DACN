@@ -79,13 +79,13 @@ const FileManagement = () => {
     }
   };
 
-  const formatDateTime = (dt) => {
-    const d = new Date(dt);
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(
-      d.getHours()
-    )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-  };
+  // const formatDateTime = (dt) => {
+  //   const d = new Date(dt);
+  //   const pad = (n) => String(n).padStart(2, "0");
+  //   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(
+  //     d.getHours()
+  //   )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  // };
 
   // -------------------- Load data --------------------
   useEffect(() => {
@@ -104,18 +104,18 @@ const FileManagement = () => {
     fetchFiles();
   }, [knowledgeBaseId, currentPage, searchValues]);
 
-  useEffect(() => {
-    // Load list knowledge bases
-    const fetchKnowledgeBases = async () => {
-      try {
-        const res = await axiosInstance.get("/knowledge_bases/list");
-        if (Array.isArray(res.data)) setKnowledgeBases(res.data);
-      } catch (err) {
-        console.error("Error fetching knowledge bases:", err);
-      }
-    };
-    fetchKnowledgeBases();
-  }, []);
+  // useEffect(() => {
+  //   // Load list knowledge bases
+  //   const fetchKnowledgeBases = async () => {
+  //     try {
+  //       const res = await axiosInstance.get("/knowledge_bases/list");
+  //       if (Array.isArray(res.data)) setKnowledgeBases(res.data);
+  //     } catch (err) {
+  //       console.error("Error fetching knowledge bases:", err);
+  //     }
+  //   };
+  //   fetchKnowledgeBases();
+  // }, []);
 
   const loadFilesByKb = async () => {
     setIsLoading(true);
@@ -452,15 +452,16 @@ const FileManagement = () => {
 
                 {/* Knowledge Base Selection */}
                 <div className="mb-3">
-                  <label className="form-label">Select Knowledge Base <span className="text-danger">*</span></label>
-                  <select className="form-select" value={knowledgeBaseId} onChange={(e) => setKnowledgeBaseId(e.target.value)}>
-                    <option value="">Choose a Knowledge Base</option>
-                    {knowledgeBases.map((kb) => (
-                      <option key={kb._id} value={kb._id}>{kb.name}</option>
-                    ))}
-                  </select>
+                  <label className="form-label">
+                    Knowledge Base <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={knowledgeBaseName}
+                    disabled
+                  />
                 </div>
-
               </div>
               <div className="modal-footer border-0 pt-0">
                 <button type="button" className="btn btn-secondary" onClick={handleCloseUploadModal}>Cancel</button>

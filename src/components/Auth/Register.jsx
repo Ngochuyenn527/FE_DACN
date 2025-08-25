@@ -371,29 +371,6 @@ const Register = () => {
             sign in now
           </Link>
         </div>
-
-        <div className="text-center">
-          <div className="d-flex justify-content-center gap-3">
-            <button
-              type="button"
-              className="btn btn-light rounded-circle d-flex align-items-center justify-content-center"
-              style={{
-                width: "35px",
-                height: "35px",
-                border: "1px solid #e5e7eb",
-                backgroundColor: "#f9fafb",
-              }}
-              onClick={() => {
-                /* Handle Google login */
-              }}
-            >
-              <i
-                className="bi bi-google"
-                style={{ fontSize: "15px", color: "#db4437" }}
-              ></i>
-            </button>
-          </div>
-        </div>
       </form>
     </AuthLayout>
   );
