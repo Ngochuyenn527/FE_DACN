@@ -196,14 +196,10 @@ const FileManagement = () => {
     setCurrentPage(1);
   };
 
-  const handleView = (project) => {
-    navigate(`/dashboard/projects/view/${project.id}`);
-  };
-
   const handleEdit = async (item) => {
     if (confirm(`Are you sure you want to edit "${item.name}"?`)) {
       try {
-        await axiosInstance.put(`/api/projects/edit/${item.id}`);
+        await axiosInstance.put(`/api/files/edit/${item.id}`);
         alert("Edit successful!");
         loadFiles();
       } catch (err) {
@@ -365,21 +361,6 @@ const FileManagement = () => {
                     ))}
                     <td>
                       <div className="d-flex justify-content-center gap-2">
-                        <button
-                          className="btn btn-outline-dark btn-sm d-flex flex-column align-items-center px-3 py-2 fw-bold"
-                          onClick={() => handleView(row)}
-                          style={{ minWidth: "60px", fontWeight: "600" }}
-                        >
-                          <i
-                            className="bi bi-eye mb-1"
-                            style={{ fontSize: "14px", fontWeight: "bold" }}
-                          ></i>
-                          <span
-                            style={{ fontSize: "10px", fontWeight: "bold" }}
-                          >
-                            View
-                          </span>
-                        </button>
                         <button
                           className="btn btn-outline-warning btn-sm d-flex flex-column align-items-center px-3 py-2 fw-bold"
                           onClick={() => handleEdit(row)}

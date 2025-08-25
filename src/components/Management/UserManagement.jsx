@@ -148,15 +148,8 @@ const UserManagement = () => {
     setCurrentPage(1);
   };
 
-  const handleEdit = async (user) => {
-    try {
-      await axiosInstance.put(`/api/users/edit/${user.id}`);
-      alert("Edit successful!");
-      loadUsers();
-    } catch (err) {
-      alert("Edit failed.");
-      console.error(err);
-    }
+  const handleEdit = (user) => {
+    navigate(`/dashboard/users/edit/${user.id}`);
   };
 
   const handleDelete = async (user) => {

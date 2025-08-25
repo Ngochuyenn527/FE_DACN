@@ -16,6 +16,7 @@ import ChatManagement from "./components/Management/ChatManagement";
 import FileManagement from "./components/Management/FileManagement";
 import DatasetPage from "./components/Management/DatasetPage";
 import UserManagement from "./components/Management/UserManagement";
+import EditUser from "./components/Management/EditUser";
 import "./App.css";
 
 function App() {
@@ -88,6 +89,8 @@ function App() {
             path="/dashboard/user-management"
             element={<UserManagement />}
           />
+          <Route path="/dashboard/users/edit/:id" element={<EditUser />} />
+
           <Route path="/knowledge-base" element={<KnowledgeBaseManagement />} />
           <Route path="/dataset/:kbId/:kbName" element={<DatasetPage />} />
 
