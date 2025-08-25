@@ -27,12 +27,14 @@ function AssistantConfigModal({ open, onClose, onSave }) {
         const response = await axiosInstance.get("/knowledge_bases/list");
         if (Array.isArray(response.data)) {
           const options = response.data.map((item) => ({
-            value: item._id, 
-            label: item.name
+            value: item._id,
+            label: item.name,
           }));
           setKbOptions(options);
         } else {
-          showToast("Failed to load knowledge bases. Invalid data format.", { type: "error" });
+          showToast("Failed to load knowledge bases. Invalid data format.", {
+            type: "error",
+          });
         }
       } catch (error) {
         console.error("Error fetching knowledge bases:", error);
@@ -158,7 +160,9 @@ function AssistantConfigModal({ open, onClose, onSave }) {
           <ul className="nav nav-tabs">
             <li className="nav-item">
               <button
-                className={`nav-link ${activeTab === "assistant" ? "active" : ""}`}
+                className={`nav-link ${
+                  activeTab === "assistant" ? "active" : ""
+                }`}
                 onClick={() => setActiveTab("assistant")}
               >
                 Assistant settings
@@ -481,27 +485,30 @@ export default function ChatManagement() {
   useEffect(() => {
     const fetchChats = async () => {
       if (!selectedAssistant) return;
-  
+
       try {
         const response = await axiosInstance.get(
           `/api/v2/history/conversation/by-assistant/${selectedAssistant.id}`
         );
-  
+
         // Nếu status 200 nhưng data null hoặc không phải mảng thì mặc định mảng rỗng
-        const chatsForAssistant = Array.isArray(response.data) ? response.data : [];
-  
-        setAssistantChats(prev => ({
+        const chatsForAssistant = Array.isArray(response.data)
+          ? response.data
+          : [];
+
+        setAssistantChats((prev) => ({
           ...prev,
           [selectedAssistant.id]: chatsForAssistant,
         }));
-  
+
         // Tự động chọn conversation đầu tiên nếu có
-        setSelectedChat(chatsForAssistant.length > 0 ? chatsForAssistant[0] : null);
-        
+        setSelectedChat(
+          chatsForAssistant.length > 0 ? chatsForAssistant[0] : null
+        );
       } catch (error) {
         if (error.response && error.response.status === 404) {
           // Nếu không tìm thấy conversation thì set mảng rỗng, không show error toast
-          setAssistantChats(prev => ({
+          setAssistantChats((prev) => ({
             ...prev,
             [selectedAssistant.id]: [],
           }));
@@ -509,44 +516,54 @@ export default function ChatManagement() {
         } else {
           // Lỗi khác mới show toast
           console.error("Error fetching chats:", error);
-          showToast("Error fetching assistant conversations.", { type: "error" });
+          showToast("Error fetching assistant conversations.", {
+            type: "error",
+          });
         }
       }
     };
-  
+
     fetchChats();
   }, [selectedAssistant]);
-  
 
   const handleNewChat = async () => {
     if (!selectedAssistant) {
-      showToast("Please select an assistant first to create a new chat.", { type: "info" });
+      showToast("Please select an assistant first to create a new chat.", {
+        type: "info",
+      });
       return;
     }
     try {
       // Gọi API để tạo cuộc trò chuyện mới
       const newChatPayload = {
         assistant_id: selectedAssistant.id,
-        name: `New chat with ${selectedAssistant.assistant_name}`
+        name: `New chat with ${selectedAssistant.assistant_name}`,
       };
-      const response = await axiosInstance.post("/api/v2/history/conversation/create", newChatPayload);
-      
+      const response = await axiosInstance.post(
+        "/api/v2/history/conversation/create",
+        newChatPayload
+      );
+
       if (response.status === 200 && response.data.id) {
         const newChat = {
-          conversation_id: response.data.id,  // Lấy ID từ response.data.id
+          conversation_id: response.data.id, // Lấy ID từ response.data.id
           name: newChatPayload.name,
-          messages: []  // Khởi tạo messages rỗng cho chat mới
+          messages: [], // Khởi tạo messages rỗng cho chat mới
         };
         showToast("New chat created successfully!", { type: "success" });
 
         // Cập nhật trạng thái `assistantChats`
-        setAssistantChats(prev => {
+        setAssistantChats((prev) => {
           const updatedChats = { ...prev };
-          const chatsForThisAssistant = updatedChats[selectedAssistant.id] || [];
-          updatedChats[selectedAssistant.id] = [...chatsForThisAssistant, newChat];
+          const chatsForThisAssistant =
+            updatedChats[selectedAssistant.id] || [];
+          updatedChats[selectedAssistant.id] = [
+            ...chatsForThisAssistant,
+            newChat,
+          ];
           return updatedChats;
         });
-        
+
         // Chọn cuộc trò chuyện mới
         setSelectedChat(newChat);
       } else {
@@ -556,7 +573,7 @@ export default function ChatManagement() {
       showToast("Error creating new chat.", { type: "error" });
     }
   };
-  
+
   const handleSelectChat = (chat) => {
     setSelectedChat(chat);
     console.log("Selected chat:", chat);
@@ -564,64 +581,68 @@ export default function ChatManagement() {
 
   const handleSend = async () => {
     if (!message.trim() || !selectedChat) return;
-  
+
     const userMessage = { role: "user", content: message };
     setMessage("");
-  
+
     // Hiển thị ngay tin nhắn của user
-    setAssistantChats(prev => {
+    setAssistantChats((prev) => {
       const updated = { ...prev };
-      updated[selectedAssistant.id] = (updated[selectedAssistant.id] || []).map(chat =>
-        chat.conversation_id === selectedChat.conversation_id
-          ? { ...chat, messages: [...(chat.messages || []), userMessage] }
-          : chat
+      updated[selectedAssistant.id] = (updated[selectedAssistant.id] || []).map(
+        (chat) =>
+          chat.conversation_id === selectedChat.conversation_id
+            ? { ...chat, messages: [...(chat.messages || []), userMessage] }
+            : chat
       );
       return updated;
     });
-  
+
     // Tạo sẵn tin nhắn rỗng cho bot
     const botMessage = { role: "assistant", content: "" };
-    setAssistantChats(prev => {
+    setAssistantChats((prev) => {
       const updated = { ...prev };
-      updated[selectedAssistant.id] = (updated[selectedAssistant.id] || []).map(chat =>
-        chat.conversation_id === selectedChat.conversation_id
-          ? { ...chat, messages: [...(chat.messages || []), botMessage] }
-          : chat
+      updated[selectedAssistant.id] = (updated[selectedAssistant.id] || []).map(
+        (chat) =>
+          chat.conversation_id === selectedChat.conversation_id
+            ? { ...chat, messages: [...(chat.messages || []), botMessage] }
+            : chat
       );
       return updated;
     });
-  
+
     try {
       const payload = {
         conversation_id: selectedChat.conversation_id,
         message: userMessage.content,
       };
-  
+
       const response = await fetch("/api/v2/Chat/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams(payload).toString(),
       });
-  
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-  
+
       let accumulated = "";
-  
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-  
+
         accumulated += decoder.decode(value, { stream: true });
-  
+
         // Cập nhật botMessage content liên tục
-        setAssistantChats(prev => {
+        setAssistantChats((prev) => {
           const updated = { ...prev };
-          updated[selectedAssistant.id] = (updated[selectedAssistant.id] || []).map(chat =>
+          updated[selectedAssistant.id] = (
+            updated[selectedAssistant.id] || []
+          ).map((chat) =>
             chat.conversation_id === selectedChat.conversation_id
               ? {
                   ...chat,
-                  messages: chat.messages.map(m =>
+                  messages: chat.messages.map((m) =>
                     m === botMessage ? { ...m, content: accumulated } : m
                   ),
                 }
@@ -632,14 +653,16 @@ export default function ChatManagement() {
       }
     } catch (err) {
       console.error("Stream error:", err);
-  
-      setAssistantChats(prev => {
+
+      setAssistantChats((prev) => {
         const updated = { ...prev };
-        updated[selectedAssistant.id] = (updated[selectedAssistant.id] || []).map(chat =>
+        updated[selectedAssistant.id] = (
+          updated[selectedAssistant.id] || []
+        ).map((chat) =>
           chat.conversation_id === selectedChat.conversation_id
             ? {
                 ...chat,
-                messages: chat.messages.map(m =>
+                messages: chat.messages.map((m) =>
                   m === botMessage ? { ...m, content: "⚠️ Lỗi stream" } : m
                 ),
               }
@@ -648,14 +671,16 @@ export default function ChatManagement() {
         return updated;
       });
     }
-  };  
+  };
   const handleSaveAssistant = async (payload) => {
     try {
       const body = {
         assistant_name: payload.assistant_name,
         description_assistant: payload.description_assistant,
         opening_greeting: payload.opening_greeting,
-        list_knowledge_base_id: payload.knowledgeBase ? [payload.knowledgeBase] : [],
+        list_knowledge_base_id: payload.knowledgeBase
+          ? [payload.knowledgeBase]
+          : [],
         system_prompt: payload.system_prompt,
         model: payload.model,
         temperature: payload.temperature,
@@ -670,11 +695,11 @@ export default function ChatManagement() {
         console.log("Create assistant response:", response.data);
         // 👇 lấy assistant vừa tạo từ response
         const newAssistant = response.data;
-  
+
         // 👇 cập nhật state trực tiếp
         setAssistants((prev) => [...prev, newAssistant]);
         setSelectedAssistant(newAssistant);
-  
+
         setShowConfig(false);
         showToast("Assistant created successfully!", { type: "success" });
         setShowConfig(false);
@@ -714,7 +739,9 @@ export default function ChatManagement() {
   };
   const handleDeleteAssistant = async (assistantId) => {
     try {
-      const response = await axiosInstance.delete(`/chat-model/delete/${assistantId}`);
+      const response = await axiosInstance.delete(
+        `/chat-model/delete/${assistantId}`
+      );
       if (response.status === 200) {
         showToast("Assistant deleted successfully!", { type: "success" });
         // Cập nhật danh sách assistants sau khi xóa
@@ -733,8 +760,10 @@ export default function ChatManagement() {
     }
   };
 
-  const chats = selectedAssistant ? (assistantChats[selectedAssistant.id] || []) : [];
-  const currentChat = chats.find(c => c.id === selectedChat?.id);
+  const chats = selectedAssistant
+    ? assistantChats[selectedAssistant.id] || []
+    : [];
+  const currentChat = chats.find((c) => c.id === selectedChat?.id);
 
   return (
     <DashboardLayout>
@@ -769,10 +798,13 @@ export default function ChatManagement() {
                     style={{ cursor: "pointer", transition: "0.2s" }}
                     onClick={() => {
                       console.log("Selected Assistant:", assistant);
-                      setSelectedAssistant(assistant)
+                      setSelectedAssistant(assistant);
                     }}
                   >
-                    <div className="text-truncate" style={{ maxWidth: "200px" }}>
+                    <div
+                      className="text-truncate"
+                      style={{ maxWidth: "200px" }}
+                    >
                       {assistant.assistant_name}
                     </div>
                     <div
@@ -789,7 +821,7 @@ export default function ChatManagement() {
                       </button>
                       <ul className="dropdown-menu dropdown-menu-end shadow-sm">
                         <li>
-                          <button 
+                          <button
                             className="dropdown-item text-danger"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -856,13 +888,13 @@ export default function ChatManagement() {
                     </button>
                     <ul className="dropdown-menu dropdown-menu-end shadow-sm">
                       <li>
-                        <button 
+                        <button
                           className="dropdown-item text-danger"
-                          onClick={(e) =>{
+                          onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteChat(chat.conversation_id);
                           }}
-                          >
+                        >
                           <i className="bi bi-trash me-2"></i> Delete
                         </button>
                       </li>
@@ -895,10 +927,16 @@ export default function ChatManagement() {
                     currentChat?.messages?.map((msg, idx) => (
                       <div
                         key={idx}
-                        className={`d-flex mb-3 ${msg.role === 'user' ? 'justify-content-end' : ''}`}
+                        className={`d-flex mb-3 ${
+                          msg.role === "user" ? "justify-content-end" : ""
+                        }`}
                       >
                         <div
-                          className={`p-2 rounded ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-light'}`}
+                          className={`p-2 rounded ${
+                            msg.role === "user"
+                              ? "bg-primary text-white"
+                              : "bg-light"
+                          }`}
                           style={{ maxWidth: "70%" }}
                         >
                           {msg.content}
@@ -925,9 +963,14 @@ export default function ChatManagement() {
             ) : (
               <div className="d-flex flex-column justify-content-center align-items-center h-100">
                 <div className="text-muted">
-                  <i className="bi bi-robot me-2" style={{ fontSize: "5rem" }}></i>
+                  <i
+                    className="bi bi-robot me-2"
+                    style={{ fontSize: "5rem" }}
+                  ></i>
                 </div>
-                <h5 className="text-muted mt-3">Please select a chat or create a new one.</h5>
+                <h5 className="text-muted mt-3">
+                  Please select a chat or create a new one.
+                </h5>
               </div>
             )}
           </div>
