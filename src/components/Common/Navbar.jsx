@@ -6,6 +6,7 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
+  const [role, setRole] = useState("");
 
   // Fetch user info
   // useEffect(() => {
@@ -30,8 +31,12 @@ export default function Navbar() {
 
   useEffect(() => {
     const storedUsername = localStorage.getItem("username");
+    const storedRole = localStorage.getItem("role");
     if (storedUsername) {
       setUsername(storedUsername);
+    }
+    if (storedRole) {
+      setRole(storedRole);
     }
   }, []);
 
@@ -55,14 +60,12 @@ export default function Navbar() {
     navigate("/reset-password");
     }
 
-  const menuItems = [
+  const baseMenuItems = [
     {
       path: "/dashboard/knowledge-base-management",
       icon: "bi bi-database",
       label: "Knowledge Base",
-      active: location.pathname.includes(
-        "/dashboard/knowledge-base-management"
-      ),
+      active: location.pathname.includes("/dashboard/knowledge-base-management"),
     },
     {
       path: "/dashboard/chat-management",
@@ -77,6 +80,17 @@ export default function Navbar() {
       active: location.pathname.includes("/dashboard/file-management"),
     },
   ];
+  
+  if (role === "admin") {
+    baseMenuItems.push({
+      path: "/dashboard/user-management",
+      icon: "bi bi-person",
+      label: "User Management",
+      active: location.pathname.includes("/dashboard/user-management"),
+    });
+  }
+  
+  const menuItems = baseMenuItems;
 
   return (
     <nav

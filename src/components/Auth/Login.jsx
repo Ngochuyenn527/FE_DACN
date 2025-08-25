@@ -77,6 +77,9 @@ const Login = () => {
         if (user?.username) {
           localStorage.setItem("username", user.username);
         }
+        if (user?.role) {
+          localStorage.setItem("role", user.role);
+        }
 
         // Chuyển hướng
         navigate("/dashboard/knowledge-base-management", { replace: true });

@@ -102,7 +102,7 @@ export default function KnowledgeBasePage() {
           list.map((kb) => ({
             id: kb._id,
             title: kb.name,
-            docs: kb.docs || 0,
+            docs: kb.file_count,
             updatedAt: kb.created_at || Date.now(),
           }))
         );

@@ -567,10 +567,43 @@ export default function ChatManagement() {
     }
   };
   
-  const handleSelectChat = (chat) => {
-    setSelectedChat(chat);
-    console.log("Selected chat:", chat);
-  };
+  const handleSelectChat = async (chat) => {
+    setSelectedChat({ ...chat, messages: [] });
+  
+    try {
+      const response = await axiosInstance.get(
+        `/api/v2/history/conversation/list_answer`,
+        {
+          params: {
+            conversation_id: chat.conversation_id,
+            page: 1,
+            size: 50,
+          },
+        }
+      );
+  
+      if (response.status === 200 && Array.isArray(response.data.items)) {
+        // Lấy messages từ API
+        const messagesFromApi = response.data.items.flatMap(item => item.messages);
+  
+        // Cập nhật state assistantChats với messages
+        setAssistantChats(prev => {
+          const updated = { ...prev };
+          updated[selectedAssistant.id] = (updated[selectedAssistant.id] || []).map(c =>
+            c.conversation_id === chat.conversation_id
+              ? { ...c, messages: messagesFromApi }
+              : c
+          );
+          return updated;
+        });
+      } else {
+        showToast("Failed to load conversation history", { type: "error" });
+      }
+    } catch (error) {
+      console.error("Error fetching conversation history:", error);
+      showToast("Error fetching conversation history", { type: "error" });
+    }
+  };  
 
   const handleSend = async () => {
     if (!message.trim() || !selectedChat) return;
@@ -752,7 +785,7 @@ export default function ChatManagement() {
   };
 
   const chats = selectedAssistant ? (assistantChats[selectedAssistant.id] || []) : [];
-  const currentChat = chats.find(c => c.id === selectedChat?.id);
+  const currentChat = chats.find(c => c.conversation_id === selectedChat?.conversation_id);
 
   return (
     <DashboardLayout>

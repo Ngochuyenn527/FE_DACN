@@ -20,6 +20,7 @@ axiosInstance.interceptors.request.use(
       config.url.includes("/auth/send_otp") ||
       config.url.includes("/auth/reset-password") ||
       config.url.includes("/auth/validate-otp")
+      
     ) {
       return config;
     }

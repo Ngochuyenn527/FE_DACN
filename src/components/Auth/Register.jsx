@@ -114,10 +114,9 @@ const Register = () => {
         otp_code: formData.emailCode,
       };
       const res = await axiosInstance.post("/auth/signup", payload);
-      if (res.data && res.data.status === 200) {
-        showToast(res.data.message || "Registration successful!", {
-          type: "success",
-        });
+      console.log("Response from register:", res.status, res.data);
+      if (res.status === 200) {
+        showToast("Registration successful!", {type: "success",});
         navigate("/login", { state: { email: formData.email } });
       } else {
         showToast(res.data.message || "Registration failed!", {

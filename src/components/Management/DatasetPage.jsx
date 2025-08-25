@@ -7,10 +7,9 @@ import { useParams } from "react-router-dom";
 import { showToast } from "../Common/Toast";
 
 const FileManagement = () => {
-  const { kbId, kbName } = useParams(); // Lấy kb_id từ URL
+  const { kbId, kbName } = useParams();
   const [knowledgeBaseId, setKnowledgeBaseId] = useState(kbId || "");
   const [knowledgeBaseName, setKnowledgeBaseName] = useState(kbName || "");
-  const [knowledgeBases, setKnowledgeBases] = useState([]);
   const [searchValues, setSearchValues] = useState({ name: "" });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +20,11 @@ const FileManagement = () => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedFileIds, setSelectedFileIds] = useState([]);
 
+  // State mới cho modal đổi tên
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [currentFile, setCurrentFile] = useState(null);
+  const [newFileName, setNewFileName] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   // -------------------- Search & Table Config --------------------
   const searchFields = [
@@ -79,43 +83,22 @@ const FileManagement = () => {
     }
   };
 
-  // const formatDateTime = (dt) => {
-  //   const d = new Date(dt);
-  //   const pad = (n) => String(n).padStart(2, "0");
-  //   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(
-  //     d.getHours()
-  //   )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-  // };
-
   // -------------------- Load data --------------------
   useEffect(() => {
     if (kbId) {
       setKnowledgeBaseId(kbId);
     }
   }, [kbId]);
+
   useEffect(() => {
     if (!knowledgeBaseId) return;
   
     const fetchFiles = async () => {
-      console.log("Loading files for KB ID:", knowledgeBaseId);
       await loadFilesByKb();
     };
   
     fetchFiles();
   }, [knowledgeBaseId, currentPage, searchValues]);
-
-  // useEffect(() => {
-  //   // Load list knowledge bases
-  //   const fetchKnowledgeBases = async () => {
-  //     try {
-  //       const res = await axiosInstance.get("/knowledge_bases/list");
-  //       if (Array.isArray(res.data)) setKnowledgeBases(res.data);
-  //     } catch (err) {
-  //       console.error("Error fetching knowledge bases:", err);
-  //     }
-  //   };
-  //   fetchKnowledgeBases();
-  // }, []);
 
   const loadFilesByKb = async () => {
     setIsLoading(true);
@@ -128,7 +111,7 @@ const FileManagement = () => {
       let filtered = data;
       if (searchValues.name) {
         filtered = data.filter((f) =>
-          f.name.toLowerCase().includes(searchValues.name.toLowerCase())
+          f.file_name.toLowerCase().includes(searchValues.name.toLowerCase())
         );
       }
 
@@ -140,7 +123,7 @@ const FileManagement = () => {
       const mappedFiles = filtered.slice(start, end).map((f) => ({
         id: f.id || f._id,
         name: f.file_name,
-        uploadDate: new Date(f.uploaded_at).toISOString().slice(0,19).replace("T"," "),
+        uploadDate: new Date(f.uploaded_at).toISOString().slice(0, 19).replace("T", " "),
         size: f.size ? `${(f.size / 1024).toFixed(2)} KB` : "0 KB",
         knowledgeBase: kbName,
         icon: getFileIcon(f.file_name.split(".").pop()),
@@ -205,7 +188,7 @@ const FileManagement = () => {
     }
     const formData = new FormData();
     selectedFiles.forEach((f) => formData.append("files", f));
-
+    setIsUploading(true);
     try {
       const res = await axiosInstance.post("/Index/api/index", formData, {
         params: { knowledge_base_id: knowledgeBaseId },
@@ -219,8 +202,11 @@ const FileManagement = () => {
     } catch (err) {
       console.error("Error uploading files:", err.response || err);
       showToast("Error uploading files.", { type: "error" });
+    } finally {
+      setIsUploading(false);
     }
   };
+  
   const handleMoveToTrash = async () => {
     if (selectedFileIds.length === 0) {
       showToast("Please select at least one file.", { type: "info" });
@@ -232,7 +218,7 @@ const FileManagement = () => {
         await axiosInstance.delete(`/api/v2/files/${fileId}`);
       }
       showToast("Selected files moved to trash.", { type: "success" });
-      setSelectedFileIds([]); // clear selection
+      setSelectedFileIds([]);
       loadFilesByKb();
     } catch (err) {
       console.error("Error deleting files:", err);
@@ -240,6 +226,40 @@ const FileManagement = () => {
     }
   };
   
+  // -------------------- Rename Modal Handlers --------------------
+  const handleOpenRenameModal = (file) => {
+    setCurrentFile(file);
+    setNewFileName(file.name);
+    setShowRenameModal(true);
+  };
+  
+  const handleCloseRenameModal = () => {
+    setShowRenameModal(false);
+    setCurrentFile(null);
+    setNewFileName("");
+  };
+  
+  const handleRenameSubmit = async () => {
+    if (!newFileName.trim()) {
+      showToast("New file name cannot be empty.", { type: "error" });
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      await axiosInstance.put(`/api/v2/files/${currentFile.id}`, null, {
+        params: { new_name: newFileName },
+      });
+      showToast("File name updated successfully!", { type: "success" });
+      handleCloseRenameModal();
+      loadFilesByKb();
+    } catch (err) {
+      console.error("Error updating file name:", err);
+      showToast("Failed to update file name.", { type: "error" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // -------------------- Render --------------------
   return (
@@ -299,7 +319,6 @@ const FileManagement = () => {
                         className="form-check-input"
                         checked={selectedFileIds.includes(row.id)}
                         onChange={(e) => {
-                          console.log("Toggled file id:", row.id); 
                           if (e.target.checked) {
                             setSelectedFileIds((prev) => [...prev, row.id]);
                           } else {
@@ -322,8 +341,6 @@ const FileManagement = () => {
                             try {
                               const res = await axiosInstance.get(`/api/v2/files/${row.id}`);
                               const fileUrl = res.data.file_path;
-                              console.log("Fetched file URL:", fileUrl);
-                              console.log("res", res)
                               if (fileUrl) window.open(fileUrl, "_blank");
                               else showToast("File not found.", { type: "error" });
                             } catch (err) {
@@ -336,23 +353,10 @@ const FileManagement = () => {
                           <span style={{ fontSize: "10px" }}>View</span>
                         </button>
 
-                        {/* Edit */}
+                        {/* Edit - Sửa đổi để mở modal */}
                         <button
                           className="btn btn-outline-warning btn-sm d-flex flex-column align-items-center px-3 py-2 fw-bold"
-                          onClick={() => {
-                            const newName = prompt("Enter new file name:", row.name);
-                            if (newName && newName !== row.name) {
-                              axiosInstance.put(`/api/v2/files/${row.id}`, { file_name: newName })
-                                .then(() => {
-                                  showToast("File name updated!", { type: "success" });
-                                  loadFilesByKb();
-                                })
-                                .catch((err) => {
-                                  console.error(err);
-                                  showToast("Failed to update file name.", { type: "error" });
-                                });
-                            }
-                          }}
+                          onClick={() => handleOpenRenameModal(row)}
                         >
                           <i className="bi bi-pencil mb-1" style={{ fontSize: "14px" }}></i>
                           <span style={{ fontSize: "10px" }}>Edit</span>
@@ -361,7 +365,10 @@ const FileManagement = () => {
                         {/* Move to trash */}
                         <button
                           className="btn btn-outline-danger btn-sm d-flex flex-column align-items-center px-3 py-2 fw-bold"
-                          onClick={handleMoveToTrash}
+                          onClick={() => {
+                            setSelectedFileIds([row.id]); // Chọn file này để xóa
+                            handleMoveToTrash(); // Gọi hàm xóa
+                          }}
                         >
                           <i className="bi bi-trash3 mb-1" style={{ fontSize: "14px" }}></i>
                           <span style={{ fontSize: "10px" }}>Move to trash</span>
@@ -374,7 +381,7 @@ const FileManagement = () => {
                             try {
                               const res = await axiosInstance.get(`/api/v2/files/${row.id}`);
                               const fileUrl = res.data.file_path;
-                              if (fileUrl) window.location.href = fileUrl; // tải xuống
+                              if (fileUrl) window.location.href = fileUrl;
                               else showToast("File not found.", { type: "error" });
                             } catch (err) {
                               console.error(err);
@@ -405,8 +412,7 @@ const FileManagement = () => {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-             onClick={(e) => e.target === e.currentTarget && handleCloseUploadModal()}>
+        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={(e) => e.target === e.currentTarget && handleCloseUploadModal()}>
           <div className="modal-dialog modal-dialog-centered modal-lg">
             <div className="modal-content" style={{ borderRadius: "12px" }}>
               <div className="modal-header border-0 pb-2">
@@ -465,7 +471,53 @@ const FileManagement = () => {
               </div>
               <div className="modal-footer border-0 pt-0">
                 <button type="button" className="btn btn-secondary" onClick={handleCloseUploadModal}>Cancel</button>
-                <button type="button" className="btn btn-primary" onClick={handleUploadFiles} disabled={selectedFiles.length === 0 || !knowledgeBaseId}>OK</button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  onClick={handleUploadFiles} 
+                  disabled={selectedFiles.length === 0 || !knowledgeBaseId || isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Uploading...
+                    </>
+                  ) : (
+                    "OK"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rename Modal */}
+      {showRenameModal && (
+        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={(e) => e.target === e.currentTarget && handleCloseRenameModal()}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content" style={{ borderRadius: "12px" }}>
+              <div className="modal-header border-0 pb-2">
+                <h5 className="modal-title fw-semibold">Rename File</h5>
+                <button type="button" className="btn-close" onClick={handleCloseRenameModal}></button>
+              </div>
+              <div className="modal-body pt-0">
+                <div className="mb-3">
+                  <label htmlFor="newFileName" className="form-label">
+                    New File Name
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="newFileName"
+                    value={newFileName}
+                    onChange={(e) => setNewFileName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer border-0 pt-0">
+                <button type="button" className="btn btn-secondary" onClick={handleCloseRenameModal}>Cancel</button>
+                <button type="button" className="btn btn-primary" onClick={handleRenameSubmit} disabled={!newFileName.trim()}>Save</button>
               </div>
             </div>
           </div>

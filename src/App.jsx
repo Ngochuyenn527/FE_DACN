@@ -14,6 +14,9 @@ import KnowledgeBaseManagement from "./components/Management/KnowledgeBaseManage
 import ChatManagement from "./components/Management/ChatManagement";
 import FileManagement from "./components/Management/FileManagement";
 import DatasetPage from "./components/Management/DatasetPage";
+import UserManagement from "./components/Management/UserManagement";
+import EditUser from "./components/Management/EditUser";
+
 import "./App.css";
 
 function App() {
@@ -27,6 +30,9 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify-otp" element={<OTPVerification />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/dashboard/users/edit/:id" element={<EditUser />} />
+          <Route path="/dashboard/user-management" element={<UserManagement />} />
+          
 
           {/* Dashboard Routes - Protected */}
           {/* <Route
