@@ -9,7 +9,6 @@ import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import OTPVerification from "./components/Auth/OTPVerification";
 import ResetPassword from "./components/Auth/ResetPassword";
-import ForgotPassword from "./components/Auth/ForgotPassword";
 import Toast from "./components/Common/Toast";
 import KnowledgeBaseManagement from "./components/Management/KnowledgeBaseManagement";
 import ChatManagement from "./components/Management/ChatManagement";
@@ -28,7 +27,6 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify-otp" element={<OTPVerification />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Dashboard Routes - Protected */}
           {/* <Route

@@ -42,12 +42,12 @@ const Login = () => {
       setErrors((prev) => ({ ...prev, email: "Invalid email format" }));
       return;
     }
-
     setIsSendingCode(true);
     try {
-      const res = await axiosInstance.post("/auth/send_otp", {
-        email: formData.email,
+      const res = await axiosInstance.post("/auth/send_otp", null, {
+        params : {to_email: formData.email},
       });
+      console.log("Response from send_otp:", res);
       if (res.data && res.data.status === 200) {
         showToast("Verification code sent to your email!", { type: "success" });
       } else {
@@ -56,6 +56,7 @@ const Login = () => {
         });
       }
     } catch (error) {
+      console.error("Error sending verification code:", error);
       showToast(error.response?.data?.message || "Failed to send code!", {
         type: "error",
       });
@@ -89,37 +90,50 @@ const Login = () => {
       setIsLoading(false);
       return;
     }
+    let endpoint = "";
+    let payload = {};
+  
+    if (activeTab === "password") {
+      endpoint = "/auth/login";
+      payload = {
+        username_or_email: formData.email,
+        password: formData.password,
+      };
+    } else {
+      endpoint = "/auth/validate-otp";
+      payload = {
+        email: formData.email,
+        otp_code: formData.verificationCode,
+      };
+    }
 
     try {
-      const payload = {
-        username_or_email: formData.email,
-      };
-
-      if (activeTab === "verification") {
-        payload.otp = formData.verificationCode;
-      } else {
-        payload.password = formData.password;
-      }
-
-      const endpoint = "/auth/login";
+      
       const response = await axiosInstance.post(endpoint, payload);
       const result = response.data;
+      console.log("Response from login:", response);
 
-      if (response.status === 200 && result.status === 200) {
+      if (response.status === 200) {
         // Success
         showToast(result.message || "Login successful!", {
           type: "success",
         });
+        const user = result.user;
         // Save token, refreshToken and expired time
-        localStorage.setItem("authToken", result.data.accessToken);
-        localStorage.setItem("refreshToken", result.data.refreshToken);
-        if (result.data.expiresIn) {
-          const expiredAt = Date.now() + result.data.expiresIn * 1000;
+        localStorage.setItem("authToken", result.access_token);
+        if (result.refresh_token) {
+          localStorage.setItem("refreshToken", result.refresh_token);
+        }
+        if (result.expiresIn) {
+          const expiredAt = Date.now() + result.expiresIn * 1000;
           localStorage.setItem("tokenExpiredAt", expiredAt);
+        }
+        if (user?.username) {
+          localStorage.setItem("username", user.username);
         }
         // Redirect
         navigate("/dashboard/knowledge-base-management", { replace: true });
-      } else if (result.status === 400 && Array.isArray(result.data)) {
+      } else if (response.status === 400 && Array.isArray(result.data)) {
         // Validation error
         const fieldErrors = {};
         result.data.forEach((err) => {
@@ -133,28 +147,26 @@ const Login = () => {
         showToast(result.message || "Login failed!", { type: "error" });
       }
     } catch (error) {
-      if (error.response && error.response.data) {
-        const result = error.response.data;
-        if (result.status === 401 && result.detail === "Need to verify") {
-          showToast(result.detail || "You need to verify your account!", {
-            type: "warning",
-          });
-          navigate("/verify-otp", { state: { email: formData.username } });
-        } else if (result.status === 400 && Array.isArray(result.data)) {
-          // Validation error
-          const fieldErrors = {};
-          result.data.forEach((err) => {
-            fieldErrors[err.field] = err.message;
-          });
-          setErrors(fieldErrors);
-          showToast(result.detail || "Validation error!", { type: "error" });
-        } else {
-          setErrors({ general: result.detail || "Login failed." });
-          showToast(result.detail || "Login failed!", { type: "error" });
-        }
+      console.error("Login error:", error);
+    
+      const status = error.response?.status;
+      const data = error.response?.data;
+    
+      if (status === 401 && data?.detail === "Need to verify") {
+        showToast("You need to verify your account!", { type: "warning" });
+        navigate("/verify-otp", { state: { email: formData.email } });
+      } else if (status === 400 && Array.isArray(data?.data)) {
+        const fieldErrors = {};
+        data.data.forEach((err) => {
+          fieldErrors[err.field] = err.message;
+        });
+        setErrors(fieldErrors);
+        showToast(data.message || "Validation error!", { type: "error" });
       } else {
-        setErrors({ general: "Unable to connect to server." });
-        showToast("Unable to connect to server!", { type: "error" });
+        const message =
+          data?.message || data?.detail || "Login failed. Please try again.";
+        setErrors({ general: message });
+        showToast(message, { type: "error" });
       }
     } finally {
       setIsLoading(false);

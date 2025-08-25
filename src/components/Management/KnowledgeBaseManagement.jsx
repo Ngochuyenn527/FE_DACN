@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../Layout/DashboardLayout";
+import axiosInstance from "../../api/axiosInstance";
+import { showToast } from "../Common/Toast";
 
 // Util: format date time
 function formatDateTime(dt) {
@@ -12,7 +14,7 @@ function formatDateTime(dt) {
 }
 
 // A single KB Card like the screenshot
-function KnowledgeBaseCard({ kb, onOpen, onEdit, onDelete }) {
+function KnowledgeBaseCard({ kb, onOpen, onDelete }) {
   return (
     <div className="card shadow-sm h-100" style={{ borderRadius: 14 }}>
       <div className="card-body d-flex flex-column">
@@ -36,7 +38,9 @@ function KnowledgeBaseCard({ kb, onOpen, onEdit, onDelete }) {
               <li>
                 <button
                   className="dropdown-item text-danger"
-                  onClick={() => onDelete?.(kb.id)}
+                  onClick={() =>
+                    onDelete?.(kb.id)
+                  }
                 >
                   Delete
                 </button>
@@ -73,13 +77,44 @@ export default function KnowledgeBasePage() {
   const navigate = useNavigate();
 
   // Mock data
-  const [userName] = useState("User name");
-  const [items, setItems] = useState([
-    { id: 1, title: "KB1", docs: 1, updatedAt: Date.now() },
-  ]);
+  const [username, setUsername] = useState("");
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
+  }, []);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [newKbName, setNewKbName] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [kbToDelete, setKbToDelete] = useState(null);
+
+  useEffect(() => {
+    const fetchKbList = async () => {
+      try {
+        const res = await axiosInstance.get("/knowledge_bases/list");
+        console.log("Dữ liệu từ API /knowledge_bases/list:", res.data);
+        const list = res.data || [];
+        setItems(
+          list.map((kb) => ({
+            id: kb._id,
+            title: kb.name,
+            docs: kb.docs || 0,
+            updatedAt: kb.created_at || Date.now(),
+          }))
+        );
+      } catch (err) {
+        console.error("Fetch KB list error:", err);
+        showToast("error", "Failed to load knowledge bases ❌");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchKbList();
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -91,19 +126,53 @@ export default function KnowledgeBasePage() {
     setShowModal(true);
   };
 
-  const handleCreateKb = () => {
+  const handleCreateKb = async () => {
     if (!newKbName.trim()) return;
-    setItems((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        title: newKbName.trim(),
-        docs: 0,
-        updatedAt: Date.now(),
-      },
-    ]);
-    setShowModal(false);
-    setNewKbName("");
+  
+    try {
+      const res = await axiosInstance.post("/knowledge_bases/create", {
+        name: newKbName.trim(),
+      });
+  
+      const createdKb = res.data;
+      console.log("Created KB:", createdKb);
+  
+      // cập nhật list
+      setItems((prev) => [
+        ...prev,
+        {
+          id: createdKb.id,            // lấy id từ BE
+          title: newKbName.trim(),     // dùng tên vừa nhập
+          docs: 0,                     // mới tạo => 0 Docs
+          updatedAt: Date.now(),       // thời điểm hiện tại
+        },
+      ]);
+  
+      setShowModal(false);
+      setNewKbName("");
+  
+      showToast("success", createdKb.message || "Knowledge base created successfully ✅");
+    } catch (err) {
+      if (err.response) {
+        const { status, data } = err.response;
+        const msg = data?.message || "Something went wrong ❌";
+  
+        if (status === 400) {
+          showToast("error", msg);
+        } else if (status === 401) {
+          showToast("error", msg || "Unauthorized ❌");
+        } else if (status === 409) {
+          showToast("error", msg || "Knowledge base already exists ⚠️");
+        } else {
+          showToast("error", msg);
+        }
+      } else if (err.request) {
+        showToast("error", "No response from server ⚠️");
+      } else {
+        showToast("error", "Unexpected error ❌");
+      }
+      console.error("Create KB error:", err);
+    }
   };
 
   const handleCloseModal = () => {
@@ -114,9 +183,40 @@ export default function KnowledgeBasePage() {
   const onOpen = (kb) => {
     navigate(`/dataset/${kb.id}/${encodeURIComponent(kb.title)}`);
   };
-  const onDelete = (id) => {
-    if (window.confirm("Delete this knowledge base?")) {
-      setItems((prev) => prev.filter((x) => x.id !== id));
+
+  const onDelete = async (id) => {
+    setKbToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteKb = async () => {
+    try {
+      const res = await axiosInstance.delete(`/knowledge_bases/delete/${kbToDelete}`);
+      showToast(res.data);
+
+      // Cập nhật danh sách sau khi xóa
+      setItems((prev) => prev.filter((x) => x.id !== kbToDelete));
+      setShowDeleteModal(false);
+      setKbToDelete(null);
+    } catch (err) {
+      console.error("Lỗi xóa KB:", err);
+      if (err.response) {
+        const { status, data } = err.response;
+        const msg = data?.message || "Xóa thất bại ❌";
+
+        if (status === 404) {
+          showToast("error", "Không tìm thấy knowledge base ❌");
+        } else if (status === 401) {
+          showToast("error", "Không có quyền truy cập ❌");
+        } else {
+          showToast("error", msg);
+        }
+      } else if (err.request) {
+        showToast("error", "Không nhận được phản hồi từ server ⚠️");
+      } else {
+        showToast("error", "Lỗi bất ngờ ❌");
+      }
+      setShowDeleteModal(false);
     }
   };
 
@@ -127,7 +227,7 @@ export default function KnowledgeBasePage() {
         <div className="d-flex justify-content-between align-items-center mb-3">
           {/* Bên trái */}
           <div>
-            <h3 className="fw-bold m-0">Welcome back, {userName}</h3>
+            <h3 className="fw-bold m-0">Welcome back, {username}</h3>
             <div className="text-muted">
               Which knowledge bases will you use today?
             </div>
@@ -232,6 +332,43 @@ export default function KnowledgeBasePage() {
                   disabled={!newKbName.trim()}
                 >
                   OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content" style={{ borderRadius: "12px" }}>
+              <div className="modal-header border-0 pb-2">
+                <h5 className="modal-title fw-semibold">Xác nhận xóa</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowDeleteModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body pt-0">
+                <p>Bạn có chắc muốn xóa knowledge base này?</p>
+              </div>
+              <div className="modal-footer border-0 pt-0">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowDeleteModal(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDeleteKb}
+                >
+                  Xóa
                 </button>
               </div>
             </div>

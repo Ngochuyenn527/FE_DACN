@@ -34,9 +34,7 @@ const Register = () => {
     }
   };
 
-  const handleSendCode = async (e) => {
-    e.preventDefault();
-    console.log("handleSendCode clicked, email:", formData.email);
+  const handleSendCode = async () => {
     if (!formData.email.trim()) {
       setErrors((prev) => ({ ...prev, email: "Email is required" }));
       return;
@@ -48,11 +46,10 @@ const Register = () => {
 
     setIsSendingCode(true);
     try {
-      const res = await axiosInstance.post("/auth/send_otp", {
-        to_email: formData.email,
+      const res = await axiosInstance.post("/auth/send_otp", null, {
+        params: { to_email: formData.email },
       });
-      console.log("Response from send_otp:", res);
-      if (res.data && res.data.status === 200) {
+      if (res.status === 200) {
         setCodeSent(true);
         showToast("Verification code sent to your email!", { type: "success" });
       } else {
@@ -111,11 +108,10 @@ const Register = () => {
     try {
       const payload = {
         username: formData.username,
-        displayName: formData.displayName,
+        full_name: formData.displayName,
         email: formData.email,
         password: formData.password,
-        confirmPassword: formData.confirmPassword,
-        emailCode: formData.emailCode,
+        otp_code: formData.emailCode,
       };
       const res = await axiosInstance.post("/auth/signup", payload);
       if (res.data && res.data.status === 200) {

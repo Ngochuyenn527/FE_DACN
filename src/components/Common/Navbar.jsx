@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import axiosInstance from "../../api/axiosInstance";
 import { showToast } from "./Toast";
 
 export default function Navbar() {
@@ -29,19 +28,32 @@ export default function Navbar() {
   //   fetchUser();
   // }, [navigate]);
 
-  const handleLogout = async () => {
-    try {
-      await axiosInstance.post("/auth/logout", {});
-      showToast("Đăng xuất thành công!", { type: "success" });
-    } finally {
-      // Xoá token
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("tokenExpiredAt");
-      // Điều hướng về login
-      navigate("/login");
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    if (storedUsername) {
+      setUsername(storedUsername);
     }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("tokenExpiredAt");
+    localStorage.removeItem("username");
+    localStorage.removeItem("full_name");
+  
+    // Reset state UI (nếu có)
+    setUsername("");
+  
+    // Hiển thị thông báo
+    showToast("Log out successfully!", { type: "success" });
+  
+    // Chuyển hướng về trang login
+    navigate("/login");
   };
+  const handleResetPassword = () => {
+    navigate("/reset-password");
+    }
 
   const menuItems = [
     {
@@ -152,9 +164,9 @@ export default function Navbar() {
                     className="fw-semibold text-dark"
                     style={{ fontSize: "14px" }}
                   >
-                    {username || "Admin User"}
+                    {username || "Guest"}
                   </div>
-                  <small className="text-muted">Administrator</small>
+                  <small className="text-muted"></small>
                 </div>
                 {/* <i className="bi bi-chevron-down ms-2 text-muted"></i> */}
               </div>
@@ -176,6 +188,15 @@ export default function Navbar() {
                 >
                   <i className="bi bi-box-arrow-right me-3"></i>
                   Logout
+                </button>
+              </li>
+              <li>
+                <button
+                  className="dropdown-item d-flex align-items-center py-2 text-secondary"
+                  onClick={handleResetPassword}
+                >
+                  <i className="bi bi-key me-3"></i>
+                  Reset Password
                 </button>
               </li>
             </ul>
